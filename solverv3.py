@@ -17,10 +17,10 @@ class Solve():
 
     def matrix(self):
         matrix_xl = np.array(
- [['0', '0', '0', '0', '2', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x']
+ [['0', '0', '0', '0', '1', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x']
 , ['0', '0', '0', '0', '2', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x']
-, ['1', '1', '2', '1', '2', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x']
-, ['x', 'x', '2', '-1', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x']
+, ['1', '1', '2', '1', '1', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x']
+, ['x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x']
 , ['x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x']
 , ['x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x']
 , ['x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x']
@@ -162,13 +162,17 @@ class Solve():
 
         return list_pos_free
     
-    def find_num(list_around, x):
+    def find_num(list_around):
+        nums_list = []
+        #Filtra la lista con los colindantes que sean letras
+        for x in range(len(list_around)):
+            for y in range(len(list_around)):
+                item = list_around[x][y]
+                tf_list = np.isin(item, abc)
+                if tf_list == True:
+                    nums_list.append(item)
 
-        #Filtra la lista con los colindantes
-        tf_list = np.isin(list_around, abc)
-        filter_list = list_around[tf_list]
-        #filter_list = list(filter_list)
-        return filter_list
+        return nums_list
 
         
     def first_equation(listas):
@@ -192,28 +196,31 @@ class Solve():
         list_positions = []
 
         #letters = np.isin(matrix, num) 
-        list_abc = Solve.find_x(self, abc, matrix) #Busca las letras que hay en la matriz y devuelve las posiciones
-        for x in list_abc:
+        pos_abc, list_abc = Solve.find_x(self, abc, matrix) #Busca las letras que hay en la matriz y devuelve las posiciones
+
+        for x in pos_abc:
             item = list_pos_matrix[x[1]][x[0]]
             
             list_positions.append(item)
 
-        list_num = Solve.find_x(self, num, matrix)
+        pos_num, list_num = Solve.find_x(self, num, matrix)
 
-        for x in list_num:
-            letter = int(Solve.buscar_item(self, x[0], x[1], matrix))#Busca la letra que estamos buscando
 
-            equation2.append([letter])
+        for x in pos_num:
+            number = int(Solve.buscar_item(self, x[0], x[1], matrix))#Busca el numero que estamos buscando
+
+            equation2.append([number])
             
-            list_around = Solve.alrededor(self, x, matrix)# Itera sobre los que están alrededor del que buscamos
-            
-            filter_list = Solve.find_num(list_around, letter)
+            items_around, pos_around = Solve.alrededor(self, x, matrix)# Itera sobre los que están alrededor del que buscamos
+
+            filter_list = Solve.find_num(items_around)
             
             list_letters.append(filter_list)    
         
         equation1 = Solve.first_equation(list_letters)
-        
         equation2 = np.array(equation2)
+        print(equation1)
+        print(equation2)
 
         #Other solutions 
        
@@ -241,10 +248,10 @@ class Solve():
             
             x_around = Solve.check_x_around(self, items_list, list_positions_matrix, numbers[n])
 
-            if x_around == None:
+            if len(x_around) == 0:
                 matrix_3x3, list_positions_matrix = Solve.matrix_3x3(self, pos_letters[n], self.matrix)
                 Solve.equation(self, matrix_3x3, list_positions_matrix)
-
+                
             else:
                 for a in x_around:
                     pos_bomb = [a[0], a[1]]
@@ -285,7 +292,7 @@ class Solve():
         pos_letters, numbers_mx = Solve.find_x(self, num, self.matrix)
 
         list_pos_bomb, list_pos_free = Solve.sol_matrix(self, pos_letters, numbers_mx)
-
+        
         Solve.click(self, list_pos_bomb, list_pos_free)
 
         #Mueve el raton hacia un sitio para que así no cree confusiones a la hora de hacer la matriz
