@@ -149,15 +149,15 @@ class Solve():
         #Busca las x alrededor del número a buscar
         xb, e1 = Solve.find_x(self, abc, item_list)
 
-        #Busca los numeros alrededor de la posición y devuelve sus posiciones e items
-        for x in range(len(item_list)):
-            for y in range(len(item_list[x])):
-                item = item_list[x][y]
-                pos = [x, y]
-                check_item = np.isin(num, item)
-                if (np.any(check_item) == True) and (pos_number != position_list[x][y]):
-                    positions_near.append(position_list[x][y])
-                    number_near.append(item)
+        #Busca los numeros al lado de la posición y devuelve sus posiciones e items
+        colindants_pos = [[1,0], [0,1], [2,1], [1,2]]
+        for x in colindants_pos:
+            item = item_list[x[0]][x[1]]
+            pos = [x[0], x[1]]
+            check_item = np.isin(num, item)
+            if np.any(check_item) == True:
+                positions_near.append(position_list[x[0]][x[1]])
+                number_near.append(item)
 
         # Coge las x alrededor del otro numero para poder hacer la ecuacion
         for pos in positions_near:
@@ -208,8 +208,6 @@ class Solve():
                 for b in bombs:
                     list_pos_bomb.append(b)
                 
-                
-            
             frees = Solve.check_free(self, items_list, list_positions_matrix, numbers[n])
             if len(frees) != 0:
                 for a in frees:

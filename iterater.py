@@ -19,7 +19,7 @@ class Iter():
             self.MINES = 99
 
 
-        board = pyautogui.locateOnScreen("Python\Proyectos\Bots\BotMinesweeper\Imagenes\medium.png", confidence=0.97)
+        board = pyautogui.locateOnScreen("medium.png", confidence=0.97)
         self.board = board
         self.board_left = board[0]
         self.board_top = board[1]
@@ -58,8 +58,7 @@ class Iter():
             return('7')#No es seguro
         elif rgb == (242, 54, 7):
             return('-1') 
-        else:
-            print(rgb)
+
     
     def get_matrix(self):
         self.board_bbox = self.board_left, self.board_top, self.board_left + 32 * (self.squares_x - 1), self.board_top + 32 * (self.squares_y - 1) # Son unos calculos para adivinar donde se encuentra la region de la caja

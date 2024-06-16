@@ -42,33 +42,6 @@ class Solve():
                     item = matrix[y][x]
                     return item
                 
-    # Creates            
-    def matrix_3x3(self, pos, matrix):
-        matrix_3x3 = []
-        list_positions_matrix = []
-        n = 0
-
-        for y in range(-1, 2):
-            temp_list = []
-            temp_list2 = []
-
-            for x in range(-1, 2):
-                position = [pos[0] + x, pos[1] + y]
-                
-                item = Solve.buscar_item(self, position[0], position[1], matrix)
-                if item == 'x':
-                    item = abc[n]
-                        
-                temp_list.append(item)
-                temp_list2.append(position)    
-                n += 1
-                    
-            matrix_3x3.append(temp_list)
-            list_positions_matrix.append(temp_list2)
-
-        return matrix_3x3, list_positions_matrix
-    
-    # Finds whatever in a given matrix and search
     def find_x(self, busq, matrix):
         pos_x  = []
         items_x = []
@@ -152,83 +125,68 @@ class Solve():
 
         return list_pos_free
     
-    def find_num(list_around):
-        nums_list = []
-        #Filtra la lista con los colindantes que sean letras
-        for x in range(len(list_around)):
-            for y in range(len(list_around)):
-                item = list_around[x][y]
-                tf_list = np.isin(item, abc)
-                if tf_list == True:
-                    nums_list.append(item)
-
-        return nums_list
-
+    def equation1(self, array1, array2):
+        equation = []
+        if len(array1) >= len(array2):
+            equation.append(np.isin(array1, array2))
+            equation.append(np.isin(array1, array1))
         
-    def first_equation(listas):
-        max_list = []
-        for lista in listas:
-            if len(max_list) <= len(lista):
-                max_list = lista
-        
-        equation1 = []
+        else:
+            equation.append(np.isin(array2, array1))
+            equation.append(np.isin(array2, array2))
 
-        for lista in listas:
-            new_list = np.isin(max_list, lista)
-            equation1.append(new_list)
-        
-        return equation1
+        return equation
 
-    def equation(self, matrix, list_pos_matrix):
-        list_letters = []
-        equation2 = []
 
-        list_positions = []
+    def equation_solving(self, item_list, position_list, pos_number):
+        positions_near = []
+        number_near = []
 
-        #letters = np.isin(matrix, num) 
-        pos_abc, list_abc = Solve.find_x(self, abc, matrix) #Busca las letras que hay en la matriz y devuelve las posiciones
+        positions_x = []
+        bomb_positions = []
 
-        for x in pos_abc:
-            item = list_pos_matrix[x[1]][x[0]]
+        #Busca las x alrededor del número a buscar
+        xb, e1 = Solve.find_x(self, abc, item_list)
+
+        #Busca los numeros al lado de la posición y devuelve sus posiciones e items
+        colindants_pos = [[1,0], [0,1], [2,1], [1,2]]
+        for x in colindants_pos:
+            item = item_list[x[0]][x[1]]
+            pos = [x[0], x[1]]
+            check_item = np.isin(num, item)
+            if np.any(check_item) == True:
+                positions_near.append(position_list[x[0]][x[1]])
+                number_near.append(item)
+
+        # Coge las x alrededor del otro numero para poder hacer la ecuacion
+        for pos in positions_near:
+            item_num, pos_num = Solve.alrededor(self, pos, self.matrix)
+
+            pos_n, n = Solve.find_x(self, abc, item_num)
             
-            list_positions.append(item)
-
-        pos_num, list_num = Solve.find_x(self, num, matrix)
-
-
-        for x in pos_num:
-            number = int(Solve.buscar_item(self, x[0], x[1], matrix))#Busca el numero que estamos buscando
-
-            equation2.append([number])
+            #Crea las equaciones para que sean resolvidas más adelante
+            equation1 = Solve.equation1(self, e1, n)
+            equation2 = np.array([self.matrix[pos_number[1]][pos_number[0]], self.matrix[pos[1]][pos[0]]])
+            equation2 = equation2.astype(int)
             
-            items_around, pos_around = Solve.alrededor(self, x, matrix)# Itera sobre los que están alrededor del que buscamos
+            x, residuals, rank, s = np.linalg.lstsq(equation1, equation2, rcond=None)
+            if len(x) > 3:
+                break
 
-            filter_list = Solve.find_num(items_around)
-            
-            list_letters.append(filter_list)    
+            for p in range(len(pos_n)):
+                positions_x.append(pos_num[pos_n[p][1]][pos_n[p][0]])
+            positions_x = list(reversed(positions_x))
+
+            for s in range(3):
+                try:
+                    sol = round(x[s])
+                    if sol == 1:
+                        bomb_positions.append(positions_x[s])
+                except IndexError:
+                    pass
         
-        equation1 = Solve.first_equation(list_letters)
-        equation2 = np.array(equation2)
-
-
-        #Other solutions 
-       
-        try:
-            sol_equation = np.linalg.solve(equation1, equation2)
-
-            print(f'{list_positions[0]} is {sol_equation[0]}, {list_positions[1]} is {sol_equation[1]} and {list_positions[2]}is {sol_equation[2]}')
-            for a in range(3):
-                if sol_equation[a] < 0:
-                    print(f'Libre en {list_positions[a]}')
-                    #Solve.click_free(self, list_positions[a])
-                elif sol_equation[a] > 0:
-                    print(f'Bomba en {list_positions[a]}')
-                    #Solve.click_bomb(self, list_positions[a])
-
-        except np.linalg.LinAlgError:
-            pass
-
-    
+        return bomb_positions
+            
 
     def sol_matrix(self, pos_letters, numbers):
         list_pos_bomb = []
@@ -239,14 +197,17 @@ class Solve():
             
             x_around = Solve.check_x_around(self, items_list, list_positions_matrix, numbers[n])
 
-            if len(x_around) == 0:
-                matrix_3x3, list_positions_matrix = Solve.matrix_3x3(self, pos_letters[n], self.matrix)
-                Solve.equation(self, matrix_3x3, list_positions_matrix)
-                
-            else:
+            if len(x_around) != 0:
                 for a in x_around:
                     pos_bomb = [a[0], a[1]]
                     list_pos_bomb.append(pos_bomb)
+            else:
+                # Queda por tener en cuenta cuando es una bomba aqui: 
+                bombs = Solve.equation_solving(self, items_list, list_positions_matrix, pos_letters[n])
+                for b in bombs:
+                    list_pos_bomb.append(b)
+                
+                
             
             frees = Solve.check_free(self, items_list, list_positions_matrix, numbers[n])
             if len(frees) != 0:
@@ -268,8 +229,6 @@ class Solve():
                 #Solve.click_free(self, b)
 
         if len(pos_bombs) > 0:
-            
-
             for a in pos_bombs:
                 print(f'Bomba en {a}')
                 #Solve.click_bomb(self, a)
@@ -279,11 +238,11 @@ class Solve():
     def main(self):
         #Coge la matriz
         self.matrix = Solve.matrix(self)
-
+        #print(self.matrix)
         pos_letters, numbers_mx = Solve.find_x(self, num, self.matrix)
 
         list_pos_bomb, list_pos_free = Solve.sol_matrix(self, pos_letters, numbers_mx)
-        
+
         Solve.click(self, list_pos_bomb, list_pos_free)
 
         #Mueve el raton hacia un sitio para que así no cree confusiones a la hora de hacer la matriz
@@ -294,5 +253,5 @@ class Solve():
 
 solve = Solve()                 
 
-for a in range(2):
+for a in range(1):
     solve.main()
