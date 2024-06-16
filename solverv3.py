@@ -34,16 +34,6 @@ class Solve():
 
         return matrix_xl
         #print(self.matrix)
-        
-    def click_bomb(self, pos):
-        pyautogui.moveTo(self.board_left + (pos[0] * self.square_side), self.board_top + (pos[1] * self.square_side))
-        sleep(0.1)
-        pyautogui.click(button='right')
-        
-    def click_free(self, pos):
-        pyautogui.moveTo(self.board_left + (pos[0] * self.square_side), self.board_top + (pos[1] * self.square_side))
-        sleep(0.1)
-        pyautogui.click(button='left')
 
     def buscar_item(self, row, column, matrix):  
         for y in range(len(matrix)):
@@ -219,8 +209,7 @@ class Solve():
         
         equation1 = Solve.first_equation(list_letters)
         equation2 = np.array(equation2)
-        print(equation1)
-        print(equation2)
+
 
         #Other solutions 
        
@@ -229,10 +218,12 @@ class Solve():
 
             print(f'{list_positions[0]} is {sol_equation[0]}, {list_positions[1]} is {sol_equation[1]} and {list_positions[2]}is {sol_equation[2]}')
             for a in range(3):
-                if sol_equation[a] == 0:
-                    Solve.click_free(self, list_positions[a])
-                elif sol_equation[a] >= 1:
-                    Solve.click_bomb(self, list_positions[a])
+                if sol_equation[a] < 0:
+                    print(f'Libre en {list_positions[a]}')
+                    #Solve.click_free(self, list_positions[a])
+                elif sol_equation[a] > 0:
+                    print(f'Bomba en {list_positions[a]}')
+                    #Solve.click_bomb(self, list_positions[a])
 
         except np.linalg.LinAlgError:
             pass
